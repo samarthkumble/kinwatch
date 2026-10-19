@@ -82,3 +82,17 @@ def test_settings_roundtrip_and_validation(client):
     assert d["alerts"][0]["rule"] == "package_waiting"      # 30-min rule now applies
     bad = client.post("/api/settings", json={"activity_deadline": "nine"})
     assert bad.status_code == 400 and "09:30" in bad.get_json()["error"]
+
+
+def test_ask_endpoint(client, monkeypatch):
+    from kinwatch import agent
+    monkeypatch.setattr(agent, "ask", lambda q: ("Amma was seen at 07:40.", "mcp"))
+    r = client.post("/api/ask", json={"question": "How is Amma?"})
+    assert r.status_code == 200 and r.get_json() == {"answer": "Amma was seen at 07:40.", "via": "mcp"}
+    assert client.post("/api/ask", json={"question": " "}).status_code == 400
+
+    def boom(q):
+        raise RuntimeError("AccessDeniedException: Your account is currently being verified")
+    monkeypatch.setattr(agent, "ask", boom)
+    r = client.post("/api/ask", json={"question": "How is Amma?"})
+    assert r.status_code == 502 and "verifying" in r.get_json()["error"]

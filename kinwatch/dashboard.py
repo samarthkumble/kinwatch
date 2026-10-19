@@ -136,6 +136,25 @@ def create_app(db_path: str = "kinwatch.db") -> Flask:
         now_ms = demo_now(at) if at else int(time.time() * 1000)
         return jsonify(build_today(store(), now_ms, simulated=bool(at)))
 
+    @app.post("/api/ask")
+    def ask():
+        q = str((request.get_json(force=True) or {}).get("question", "")).strip()[:300]
+        if not q:
+            return jsonify({"error": "Type a question first."}), 400
+        try:
+            from .agent import ask as agent_ask
+            answer, path = agent_ask(q)
+        except Exception as exc:   # Bedrock key missing, account not verified, ...
+            msg = str(exc)
+            if "AccessDenied" in msg or "verif" in msg:
+                hint = "Bedrock refused the request. If your AWS account is new, it may still be verifying."
+            elif "credential" in msg.lower() or "token" in msg.lower():
+                hint = "No Bedrock API key found. Set AWS_BEARER_TOKEN_BEDROCK before starting the dashboard."
+            else:
+                hint = "KinWatch couldn't answer right now."
+            return jsonify({"error": f"{hint} ({type(exc).__name__})"}), 502
+        return jsonify({"answer": answer, "via": path})
+
     @app.post("/api/settings")
     def settings():
         try:

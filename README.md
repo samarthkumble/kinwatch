@@ -2,7 +2,7 @@
 
 A Ring caretaking agent for parents who live alone. Built for the Amazon Developer Hackathon 2026 (Ring track + AWS Builder).
 
-> Status: Ring data layer, Bedrock vision, routine rules, Telegram alerts and the caregiver dashboard work. Strands agent and MCP server are next.
+> Status: Ring data layer, Bedrock vision, routine rules, Telegram alerts, caregiver dashboard, MCP server and the Strands agent all work.
 
 ## Quick start
 
@@ -43,6 +43,15 @@ python -m kinwatch.dashboard        # open http://127.0.0.1:8050
 ```
 
 Answers "is Amma okay today?" in one sentence, shows the day's Ring events with snapshots (birds and empty frames dimmed as ignored), current alerts, an editable routine, and a "check a different time" control for demos.
+
+## MCP server and "Ask KinWatch" agent
+
+```powershell
+python -m kinwatch.mcp_server                          # http://127.0.0.1:8765/mcp
+python -m kinwatch.agent "How is Amma doing today?"    # Strands agent on Bedrock
+```
+
+The MCP server (Streamable HTTP, protocol **2025-11-25**) exposes `get_today_status`, `list_events`, `get_alerts` and `get_routine`, so any MCP-capable assistant can check on the parent. The agent is built with the **Strands Agents SDK** on **Amazon Nova 2 Lite**; it calls those tools over MCP (or in-process if the server isn't running) and answers in a few plain sentences. The dashboard's "Ask KinWatch" box uses the same agent.
 
 ## Telegram alerts
 

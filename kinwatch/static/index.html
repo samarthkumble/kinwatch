@@ -128,6 +128,11 @@ button.secondary { background: transparent; color: var(--door); border: 1px soli
 button:hover { background: var(--door-deep); }
 button.secondary:hover { background: #E6EAF3; }
 .btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.answer { margin: 12px 0 0; padding: 12px 14px; background: var(--surface);
+  border: 1px solid var(--line); border-left: 4px solid var(--door); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.answer.err { border-left-color: var(--sindoor); color: var(--sindoor); }
+.answer small { display: block; margin-top: 6px; color: var(--muted); font-size: 13px; }
 .msg { font-size: 14px; min-height: 1.2em; margin: 0; }
 .msg.err { color: var(--sindoor); }
 .msg.ok { color: var(--leaf); }
@@ -138,6 +143,7 @@ button.secondary:hover { background: #E6EAF3; }
   aside { display: contents; }
   #alerts-sec { order: -1; }
   #day-sec { order: 0; }
+  #ask-sec { order: 1; }
   #routine-sec { order: 1; }
   #sim-sec { order: 2; }
   aside > section + section { margin-top: 0; }
@@ -178,6 +184,17 @@ button.secondary:hover { background: #E6EAF3; }
     <section id="alerts-sec" aria-labelledby="alerts-h">
       <h2 id="alerts-h">Needs your attention</h2>
       <div id="alerts"></div>
+    </section>
+
+    <section id="ask-sec" aria-labelledby="ask-h">
+      <h2 id="ask-h">Ask KinWatch</h2>
+      <p class="sub">Answers come from today's camera events, never guesses.</p>
+      <form id="ask">
+        <label class="sr-only" for="ask-q">Your question</label>
+        <input id="ask-q" name="question" placeholder="Has Amma come outside yet?" autocomplete="off">
+        <div class="btns"><button type="submit">Ask</button></div>
+      </form>
+      <p class="answer" id="ask-answer" aria-live="polite" hidden></p>
     </section>
 
     <section id="routine-sec" aria-labelledby="routine-h">
@@ -310,6 +327,23 @@ $("settings").addEventListener("submit", async (ev) => {
   if (!res.ok) { msg.className = "msg err"; msg.textContent = body.error; return; }
   msg.className = "msg ok"; msg.textContent = "Routine saved.";
   fillSettings(body.settings); load();
+});
+
+$("ask").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const q = ev.target.elements.question.value.trim() || ev.target.elements.question.placeholder;
+  const out = $("ask-answer"), btn = ev.target.querySelector("button");
+  out.hidden = false; out.className = "answer"; out.textContent = "Checking the front door…";
+  btn.disabled = true;
+  try {
+    const res = await fetch("/api/ask", { method: "POST",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: q }) });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.error);
+    out.innerHTML = `${esc(body.answer)}<small>Answered by a Strands agent on Amazon Bedrock, using ${body.via === "mcp" ? "the KinWatch MCP server" : "KinWatch's tools"}.</small>`;
+  } catch (err) {
+    out.className = "answer err"; out.textContent = err.message;
+  } finally { btn.disabled = false; }
 });
 
 $("simulate").addEventListener("submit", (ev) => {

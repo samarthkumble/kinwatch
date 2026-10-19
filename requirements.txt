@@ -3,3 +3,5 @@ pytest>=8.0
 opencv-python-headless>=4.8
 boto3>=1.39
 flask>=3.0
+mcp>=1.23,<2
+strands-agents>=1.20
