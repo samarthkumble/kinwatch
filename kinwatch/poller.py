@@ -153,6 +153,16 @@ def retry_media(client: RingClient, store: EventStore, labeller: "Labeller | Non
             labeller.label(store, r["id"], picture)
 
 
+def refetch_media(client: RingClient, store: EventStore) -> None:
+    """Re-download media for every stored event (use with KINWATCH_MODE=record to
+    build per-event replay fixtures for judges)."""
+    rows = [r for r in store.recent(500) if r["snapshot_path"] != ""]
+    print(f"re-fetching media for {len(rows)} event(s)")
+    for r in sorted(rows, key=lambda r: r["start_ms"]):
+        print(f"[REFETCH] {fmt_time(r['start_ms'])}  {r['device_name']}")
+        fetch_media(client, store, r["id"], r["device_id"], r["start_ms"], r["end_ms"])
+
+
 def label_stored(store: EventStore, labeller: "Labeller") -> None:
     rows = store.unlabelled_pictures()
     print(f"labelling {len(rows)} stored picture(s) with Bedrock")
@@ -169,6 +179,8 @@ def main() -> None:
     ap.add_argument("--no-snapshots", action="store_true")
     ap.add_argument("--retry-media", action="store_true",
                     help="fetch snapshots for stored events that have none, then exit")
+    ap.add_argument("--refetch-media", action="store_true",
+                    help="download media again for all stored events (to record fixtures)")
     ap.add_argument("--label", action="store_true",
                     help="run Bedrock vision on stored pictures without a label, then exit")
     args = ap.parse_args()
@@ -185,6 +197,9 @@ def main() -> None:
           f" telegram={'on' if notifier.enabled else 'off'}, db={args.db})")
     if args.retry_media:
         retry_media(client, store, labeller)
+        return
+    if args.refetch_media:
+        refetch_media(client, store)
         return
     while True:
         try:

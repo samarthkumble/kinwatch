@@ -10,6 +10,7 @@ Three modes:
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -62,9 +63,27 @@ def _ext_for(ctype: str | None) -> str:
 
 
 def _fixture_name(method: str, path: str) -> str:
-    """Stable, filesystem-safe name for a request, e.g. GET__v1_devices."""
+    """Legacy (day-1) fixture name: the full path, e.g. GET__v1_devices."""
     clean = re.sub(r"[^A-Za-z0-9._-]+", "_", path.strip("/"))
     return f"{method.upper()}__{clean}"
+
+
+def _short(seg: str) -> str:
+    """Ring ids are ~120 chars; keep fixture paths well under Windows' 260 limit."""
+    if len(seg) <= 32:
+        return seg
+    return f"{seg.split('.')[2] if seg.count('.') >= 3 else 'id'}-{hashlib.sha1(seg.encode()).hexdigest()[:8]}"
+
+
+def fixture_key(method: str, path: str, json_body: Any = None) -> str:
+    """Short, stable fixture name. POST bodies are part of the key, so each
+    event's snapshot (different timestamp) gets its own recorded file."""
+    parts = [_short(p) for p in path.strip("/").split("/")]
+    name = f"{method.upper()}__" + "_".join(re.sub(r"[^A-Za-z0-9._-]+", "_", p) for p in parts)
+    if json_body is not None:
+        digest = hashlib.sha1(json.dumps(json_body, sort_keys=True).encode()).hexdigest()[:10]
+        name += f"__{digest}"
+    return name
 
 
 class RingClient:
@@ -92,9 +111,14 @@ class RingClient:
     # ------------------------------------------------------------------ HTTP
     def _request(self, method: str, path: str, *, json_body: Any = None,
                  params: dict | None = None, expect_binary: bool = False):
-        name = _fixture_name(method, path)
+        name = fixture_key(method, path, json_body)
         if self.mode == "replay":
-            return self._load_fixture(name, expect_binary)
+            try:
+                return self._load_fixture(name, expect_binary)
+            except FileNotFoundError:
+                if json_body is not None:
+                    raise           # never reuse another event's media
+                return self._load_fixture(_fixture_name(method, path), expect_binary)
 
         url = BASE_URL + path
         headers = {"Authorization": f"Bearer {self.token}"}

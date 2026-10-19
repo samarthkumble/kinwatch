@@ -95,3 +95,25 @@ def test_image_type_probe_skips_rejected_values(monkeypatch):
     tried.clear()
     client.download_image("dev1", 2000)      # remembers the working type
     assert tried == ["latest_in_range"]
+
+
+def test_fixture_key_is_short_and_body_specific():
+    from kinwatch.ring_client import fixture_key
+    dev = "ava1.ring.device." + "X" * 100
+    a = fixture_key("POST", f"/v1/devices/{dev}/media/image/download", {"timestamp": 1, "type": "at_timestamp"})
+    b = fixture_key("POST", f"/v1/devices/{dev}/media/image/download", {"timestamp": 2, "type": "at_timestamp"})
+    assert a != b and len(a) < 90
+    assert fixture_key("GET", "/v1/devices") == "GET__v1_devices"
+
+
+def test_replay_never_reuses_other_events_media(tmp_path):
+    import shutil
+    from kinwatch.ring_client import DEFAULT_FIXTURE_DIR, _fixture_name
+    for f in DEFAULT_FIXTURE_DIR.glob("GET__*.json"):
+        shutil.copy(f, tmp_path / f.name)
+    client = RingClient(mode="replay", fixture_dir=tmp_path)
+    dev = client.list_devices()[0]
+    (tmp_path / (_fixture_name("POST", f"/v1/devices/{dev.id}/media/image/download") + ".jpg")).write_bytes(b"old")
+    import pytest
+    with pytest.raises(FileNotFoundError):
+        client.download_image(dev.id, 1792391915000)
