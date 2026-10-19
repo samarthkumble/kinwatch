@@ -1,0 +1,7 @@
+.env
+*.db
+snapshots/
+__pycache__/
+.venv/
+.pytest_cache/
+.kinwatch_telegram
