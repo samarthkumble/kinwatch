@@ -108,6 +108,9 @@ class Labeller:
 def check_rules(store: EventStore, now_ms: int | None = None,
                 cfg: RoutineConfig | None = None, notifier: Notifier | None = None) -> list:
     now_ms = now_ms or int(time.time() * 1000)
+    if cfg is None:
+        from .settings import load_config
+        cfg = load_config()
     events = [dict(r) for r in store.recent(500)]
     fresh = [a for a in evaluate(events, now_ms, cfg) if store.record_alert(a)]
     for a in fresh:

@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 
 IST = timezone(timedelta(hours=5, minutes=30))
+NOISE_LABELS = ("animal", "nothing")
 
 
 @dataclass
@@ -105,7 +106,12 @@ def evaluate(events: list[dict], now_ms: int, cfg: RoutineConfig | None = None) 
         if not (e.get("kw_label") == "package" or v.get("package_visible")):
             continue
         later = [x for x in evs[i + 1:] if x.get("device_name") == e.get("device_name")]
-        collected = any(_vision(x) and not _vision(x).get("package_visible") for x in later)
+        # Only a meaningful later frame can prove the parcel is gone: birds or an
+        # empty-motion frame (often a different angle) say nothing about it.
+        collected = any(
+            _vision(x) and not _vision(x).get("package_visible")
+            and (x.get("kw_label") or _vision(x).get("label")) not in NOISE_LABELS
+            for x in later)
         waited = (now_ms - e["start_ms"]) / 60000
         if not collected and waited >= cfg.package_minutes:
             t = _local(e["start_ms"], cfg.tz)
@@ -160,13 +166,18 @@ def main() -> None:
     ap.add_argument("--db", default="kinwatch.db")
     ap.add_argument("--at", help="pretend the time is HH:MM today (IST)")
     ap.add_argument("--advance", type=float, default=0, help="fast-forward N minutes")
-    ap.add_argument("--deadline", default="10:00", help="morning activity deadline")
-    ap.add_argument("--package-minutes", type=int, default=60)
+    ap.add_argument("--deadline", help="morning activity deadline (default: saved settings)")
+    ap.add_argument("--package-minutes", type=int, help="default: saved settings")
     ap.add_argument("--notify", action="store_true",
                     help="send new alerts to Telegram (each alert only once)")
     args = ap.parse_args()
 
-    cfg = RoutineConfig(activity_deadline=args.deadline, package_minutes=args.package_minutes)
+    from .settings import load_config
+    cfg = load_config()
+    if args.deadline:
+        cfg.activity_deadline = args.deadline
+    if args.package_minutes:
+        cfg.package_minutes = args.package_minutes
     now_ms = demo_now(args.at, args.advance) if (args.at or args.advance) else int(time.time() * 1000)
     store = EventStore(args.db)
     events = [dict(r) for r in store.recent(500)]

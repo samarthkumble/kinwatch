@@ -2,3 +2,4 @@ requests>=2.31
 pytest>=8.0
 opencv-python-headless>=4.8
 boto3>=1.39
+flask>=3.0

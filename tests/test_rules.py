@@ -61,3 +61,8 @@ def test_summary_counts_noise():
     events = [ev(1, "07:40", "person"), ev(2, "08:10", "animal"), ev(3, "08:20", "nothing")]
     s = summarize(events, ms("12:00"))
     assert s["events"] == 3 and s["ignored_as_noise"] == 2
+
+
+def test_birds_later_do_not_count_as_package_collected():
+    events = [ev(1, "07:40", "person"), ev(2, "08:00", "package"), ev(3, "08:20", "animal")]
+    assert rules_fired(events, "09:05") == ["package_waiting"]

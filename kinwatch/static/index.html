@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KinWatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --door: #233056;      /* painted front door */
+  --door-deep: #1A2442;
+  --ink: #1D2433;
+  --muted: #5E6779;
+  --limewash: #EEF1F4;
+  --surface: #FFFFFF;
+  --line: #D9DEE5;
+  --marigold: #E3A21A;
+  --marigold-soft: #FBF0D6;
+  --sindoor: #B8402C;
+  --sindoor-soft: #F7E3DF;
+  --leaf: #2E7A57;
+  --leaf-soft: #E1F0E8;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--limewash); color: var(--ink);
+  font: 17px/1.55 var(--body); font-variant-numeric: tabular-nums;
+}
+a { color: var(--door); }
+:focus-visible { outline: 3px solid var(--marigold); outline-offset: 2px; border-radius: 4px; }
+
+/* ---- the front door: the one bold element ---- */
+.door {
+  position: relative; background: var(--door); color: #F3F5FA;
+  padding: 28px 24px 56px;
+}
+.door::after {           /* marigold toran: scalloped garland along the lintel */
+  content: ""; position: absolute; left: 0; right: 0; bottom: -13px; height: 26px;
+  background:
+    radial-gradient(circle at 13px 0, var(--marigold) 11px, transparent 12px) 0 0 / 26px 26px repeat-x;
+  filter: drop-shadow(0 2px 0 #C4860F);
+}
+.door-inner { max-width: 1120px; margin: 0 auto; }
+.brandline { display: flex; justify-content: space-between; align-items: baseline;
+  gap: 12px; flex-wrap: wrap; color: #C9D0E2; font-size: 15px; }
+.brand { font: 700 19px/1 var(--display); color: #fff; letter-spacing: -0.01em; }
+.status { margin-top: 30px; max-width: 46rem; }
+.status-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%;
+  margin-right: 16px; vertical-align: 0.3em; background: var(--leaf); box-shadow: 0 0 0 4px rgba(46,122,87,.28); }
+.status[data-level="medium"] .status-dot { background: var(--marigold); box-shadow: 0 0 0 4px rgba(227,162,26,.3); }
+.status[data-level="high"] .status-dot { background: #E2614A; box-shadow: 0 0 0 4px rgba(226,97,74,.32); }
+.status h1 {
+  margin: 0; font: 700 clamp(30px, 5vw, 50px)/1.08 var(--display);
+  letter-spacing: -0.02em; text-wrap: balance;
+}
+.status p { margin: 14px 0 0; font-size: 19px; color: #DCE1EE; max-width: 40rem; }
+.sim-note { display: inline-block; margin-top: 16px; padding: 4px 10px; border-radius: 999px;
+  background: rgba(227,162,26,.18); color: #F6D58A; font-size: 14px; }
+
+/* ---- page body ---- */
+main { max-width: 1120px; margin: 0 auto; padding: 44px 24px 64px;
+  display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 40px; }
+h2 { font: 700 22px/1.2 var(--display); margin: 0 0 6px; letter-spacing: -0.01em; }
+.sub { margin: 0 0 18px; color: var(--muted); font-size: 15px; }
+
+.facts { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 0 0 26px; padding: 0;
+  list-style: none; color: var(--muted); font-size: 15px; }
+.facts b { color: var(--ink); font-size: 17px; }
+
+/* timeline: a real sequence, so a rail with times */
+.timeline { list-style: none; margin: 0; padding: 0; position: relative; }
+.timeline::before { content: ""; position: absolute; left: 58px; top: 6px; bottom: 6px;
+  width: 2px; background: var(--line); }
+.ev { display: grid; grid-template-columns: 48px 20px minmax(0, 1fr); gap: 0 10px;
+  padding: 0 0 22px; align-items: start; }
+.ev-time { font-weight: 700; text-align: right; padding-top: 2px; }
+.ev-pin { width: 12px; height: 12px; margin: 7px 0 0 3px; border-radius: 50%;
+  background: var(--surface); border: 3px solid var(--door); position: relative; z-index: 1; }
+.ev.flagged .ev-pin { border-color: var(--marigold); background: var(--marigold); }
+.ev-body { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg);
+  padding: 10px; }
+.ev.flagged .ev-body { border-color: var(--marigold); box-shadow: inset 4px 0 0 var(--marigold); }
+.ev-img { width: 132px; aspect-ratio: 16/9; border-radius: var(--radius-sm); object-fit: cover;
+  background: #DDE2EA; display: block; }
+.ev-img.empty { display: grid; place-items: center; color: var(--muted); font-size: 13px; text-align: center; padding: 6px; }
+.ev h3 { margin: 2px 0 2px; font-size: 17px; }
+.ev p { margin: 0; color: var(--muted); font-size: 15px; }
+.chip { display: inline-block; font-size: 13px; font-weight: 700; padding: 1px 8px;
+  border-radius: 999px; background: #E6EAF3; color: var(--door); margin-left: 6px; vertical-align: 1px; }
+.chip.package { background: var(--marigold-soft); color: #7A5306; }
+.chip.person { background: var(--leaf-soft); color: var(--leaf); }
+.ev.ignored .ev-body { background: transparent; border-style: dashed; }
+.ev.ignored .ev-img { filter: grayscale(1); opacity: .55; }
+.ev.ignored h3 { color: var(--muted); font-weight: 400; }
+.ring-raw { font-size: 13px; color: var(--muted); margin-top: 6px !important; }
+
+.empty-state { background: var(--surface); border: 1px dashed var(--line);
+  border-radius: var(--radius-lg); padding: 22px; color: var(--muted); }
+
+/* ---- right rail ---- */
+aside > section + section { margin-top: 38px; }
+.alert { border-left: 4px solid var(--marigold); background: var(--marigold-soft);
+  padding: 12px 14px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.alert + .alert { margin-top: 10px; }
+.alert.high { border-color: var(--sindoor); background: var(--sindoor-soft); }
+.alert h3 { margin: 0 0 4px; font-size: 16px; }
+.alert p { margin: 0; font-size: 15px; }
+.alert small { display: block; margin-top: 6px; color: var(--muted); font-size: 13px; }
+.calm { color: var(--leaf); background: var(--leaf-soft); padding: 12px 14px; border-radius: var(--radius-sm); }
+
+form { display: grid; gap: 12px; }
+label { display: grid; gap: 4px; font-size: 15px; font-weight: 700; }
+label span { font-weight: 400; color: var(--muted); font-size: 13px; }
+input { font: inherit; padding: 9px 11px; border: 1px solid #B9C1CD; border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--ink); width: 100%; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+button { font: 700 16px var(--body); padding: 10px 16px; border-radius: var(--radius-sm);
+  border: 0; background: var(--door); color: #fff; cursor: pointer; }
+button.secondary { background: transparent; color: var(--door); border: 1px solid var(--door); }
+button:hover { background: var(--door-deep); }
+button.secondary:hover { background: #E6EAF3; }
+.btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.msg { font-size: 14px; min-height: 1.2em; margin: 0; }
+.msg.err { color: var(--sindoor); }
+.msg.ok { color: var(--leaf); }
+
+@media (max-width: 860px) {
+  /* phone order: what's wrong, what happened, then settings */
+  main { grid-template-columns: 1fr; gap: 36px; padding: 36px 16px 56px; }
+  aside { display: contents; }
+  #alerts-sec { order: -1; }
+  #day-sec { order: 0; }
+  #routine-sec { order: 1; }
+  #sim-sec { order: 2; }
+  aside > section + section { margin-top: 0; }
+  .ev-body { grid-template-columns: 1fr; }
+  .ev-img { width: 100%; }
+  .door { padding: 22px 16px 50px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .status h1 { animation: settle .5s ease-out both; }
+  @keyframes settle { from { opacity: 0; transform: translateY(6px); } }
+}
+</style>
+</head>
+<body>
+<header class="door">
+  <div class="door-inner">
+    <div class="brandline">
+      <span class="brand">KinWatch</span>
+      <span id="dateline">Loading today…</span>
+    </div>
+    <div class="status" id="status" data-level="ok" role="status" aria-live="polite">
+      <h1><span class="status-dot" aria-hidden="true"></span><span id="status-title">Checking the front door</span></h1>
+      <p id="status-detail">Reading today's Ring events.</p>
+      <span class="sim-note" id="sim-note" hidden></span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="day-sec" aria-labelledby="day-h">
+    <h2 id="day-h">Today at the front door</h2>
+    <p class="sub">Newest first. Birds and empty frames are kept, but never alert you.</p>
+    <ul class="facts" id="facts"></ul>
+    <ol class="timeline" id="timeline"></ol>
+  </section>
+
+  <aside>
+    <section id="alerts-sec" aria-labelledby="alerts-h">
+      <h2 id="alerts-h">Needs your attention</h2>
+      <div id="alerts"></div>
+    </section>
+
+    <section id="routine-sec" aria-labelledby="routine-h">
+      <h2 id="routine-h">Routine</h2>
+      <p class="sub">KinWatch alerts you when the day doesn't match this.</p>
+      <form id="settings">
+        <label>Name<input name="parent_name" autocomplete="off" required></label>
+        <label>Usually up by<span>Alert if nobody is seen at the door by this time</span>
+          <input name="activity_deadline" type="time" required></label>
+        <label>Package wait (minutes)<span>Alert if a delivery sits outside longer than this</span>
+          <input name="package_minutes" type="number" min="5" max="720" required></label>
+        <div class="row2">
+          <label>Night from<input name="night_start" type="time" required></label>
+          <label>Night until<input name="night_end" type="time" required></label>
+        </div>
+        <div class="btns"><button type="submit">Save routine</button></div>
+        <p class="msg" id="settings-msg" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="sim-sec" aria-labelledby="sim-h">
+      <h2 id="sim-h">Check a different time</h2>
+      <p class="sub">See what KinWatch would say at another time today.</p>
+      <form id="simulate">
+        <label>Time<input name="at" type="time" value="10:05"></label>
+        <div class="btns">
+          <button type="submit">Check this time</button>
+          <button type="button" class="secondary" id="sim-reset">Back to now</button>
+        </div>
+      </form>
+    </section>
+  </aside>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let simAt = null;
+let settingsLoaded = false;
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function renderStatus(d) {
+  $("status").dataset.level = d.status.level;
+  $("status-title").textContent = d.status.title;
+  $("status-detail").textContent = d.status.detail;
+  $("dateline").textContent = `${d.date}, ${d.now}`;
+  const note = $("sim-note");
+  note.hidden = !d.simulated;
+  note.textContent = d.simulated ? `Showing ${d.now} instead of now` : "";
+  document.title = `${d.status.title} | KinWatch`;
+}
+
+function renderFacts(s) {
+  const items = [
+    [s.events, s.events === 1 ? "camera event" : "camera events"],
+    [s.people_seen, s.people_seen === 1 ? "time someone was seen" : "times someone was seen"],
+    [s.packages, s.packages === 1 ? "delivery" : "deliveries"],
+    [s.ignored_as_noise, "ignored as noise"],
+  ];
+  $("facts").innerHTML = items.map(([n, t]) => `<li><b>${n}</b> ${t}</li>`).join("");
+}
+
+function renderTimeline(events) {
+  if (!events.length) {
+    $("timeline").innerHTML =
+      `<li class="empty-state">No camera events yet today. They appear here as soon as the Ring doorbell sees something.</li>`;
+    return;
+  }
+  $("timeline").innerHTML = events.map((e) => {
+    const cls = ["ev", e.ignored ? "ignored" : "", e.flagged ? "flagged" : ""].join(" ");
+    const img = e.image
+      ? `<img class="ev-img" src="${esc(e.image)}" alt="Ring snapshot at ${esc(e.time)}: ${esc(e.description || e.label_text)}" loading="lazy">`
+      : `<div class="ev-img empty">${e.no_media ? "Ring kept no recording" : "No picture yet"}</div>`;
+    const chip = e.label ? `<span class="chip ${esc(e.label)}">${esc(e.ignored ? "Ignored" : e.label_text)}</span>` : "";
+    const heading = e.description || (e.label ? e.label_text : "Motion at the door");
+    return `<li class="${cls}">
+      <span class="ev-time">${esc(e.time)}</span><span class="ev-pin" aria-hidden="true"></span>
+      <div class="ev-body">${img}
+        <div><h3>${esc(heading)}${chip}</h3>
+          ${e.flagged ? `<p>This event triggered an alert.</p>` : ""}
+          <p class="ring-raw">Ring reported this as "${esc(e.ring_type)}"${e.label ? `, KinWatch saw: ${esc(e.label_text.toLowerCase())}` : ""}.</p>
+        </div>
+      </div></li>`;
+  }).join("");
+}
+
+function renderAlerts(alerts) {
+  if (!alerts.length) {
+    $("alerts").innerHTML = `<p class="calm">Nothing right now. You'll get a Telegram message if that changes.</p>`;
+    return;
+  }
+  // the first alert is already spelled out in the header, so keep it short here
+  $("alerts").innerHTML = alerts.map((a, i) => `
+    <div class="alert ${esc(a.severity)}">
+      <h3>${esc(a.title)}</h3>${i ? `<p>${esc(a.message)}</p>` : ""}
+      <small>${a.sent ? "Sent to your phone" : "Not sent to your phone yet"}</small>
+    </div>`).join("");
+}
+
+function fillSettings(s) {
+  const f = $("settings");
+  for (const [k, v] of Object.entries(s)) if (f.elements[k]) f.elements[k].value = v;
+  settingsLoaded = true;
+}
+
+async function load() {
+  const url = simAt ? `/api/today?at=${encodeURIComponent(simAt)}` : "/api/today";
+  try {
+    const res = await fetch(url);
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error || "Couldn't load today's events.");
+    renderStatus(d); renderFacts(d.summary); renderTimeline(d.events); renderAlerts(d.alerts);
+    if (!settingsLoaded) fillSettings(d.settings);
+  } catch (err) {
+    $("status-title").textContent = "Can't reach KinWatch";
+    $("status-detail").textContent = "The dashboard server isn't responding. Check the terminal running it, then refresh.";
+  }
+}
+
+$("settings").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const data = Object.fromEntries(new FormData(ev.target));
+  const msg = $("settings-msg");
+  const res = await fetch("/api/settings", { method: "POST",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+  const body = await res.json();
+  if (!res.ok) { msg.className = "msg err"; msg.textContent = body.error; return; }
+  msg.className = "msg ok"; msg.textContent = "Routine saved.";
+  fillSettings(body.settings); load();
+});
+
+$("simulate").addEventListener("submit", (ev) => {
+  ev.preventDefault();
+  simAt = ev.target.elements.at.value || null;
+  load();
+});
+$("sim-reset").addEventListener("click", () => { simAt = null; load(); });
+
+load();
+setInterval(() => { if (!simAt) load(); }, 10000);
+</script>
+</body>
+</html>
