@@ -14,7 +14,7 @@ from .rules import RoutineConfig
 
 SETTINGS_FILE = Path("kinwatch_settings.json")
 EDITABLE = ("parent_name", "activity_deadline", "package_minutes", "night_start", "night_end",
-            "camera_name")
+            "camera_name", "quiet_hours")
 _HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
@@ -43,6 +43,13 @@ def validate(data: dict) -> dict:
                 raise ValueError("Enter a name for the person you're looking after.")
         elif key == "camera_name":
             val = str(val).strip()[:40] or "front door"
+        elif key == "quiet_hours":
+            try:
+                val = int(val)
+            except (TypeError, ValueError):
+                raise ValueError("Quiet hours must be a whole number.")
+            if not 1 <= val <= 12:
+                raise ValueError("Quiet hours must be between 1 and 12.")
         elif key == "package_minutes":
             try:
                 val = int(val)

@@ -103,7 +103,8 @@ class Vision:
                  client=None, rekognition_client=None, backend: str | None = None):
         # live: call AWS (and cache); replay: cache only, never call AWS
         self.mode = (mode or os.environ.get("KINWATCH_VISION", "live")).lower()
-        self.backend = (backend or BACKEND).lower()
+        # read at creation time, not import time, so changing the env var takes effect
+        self.backend = (backend or os.environ.get("KINWATCH_VISION_BACKEND", "auto")).lower()
         self.cache_dir = Path(cache_dir or CACHE_DIR)
         self._client = client
         self._rek = rekognition_client

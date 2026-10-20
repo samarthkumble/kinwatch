@@ -113,7 +113,12 @@ def main() -> None:
     n = Notifier()
     if not n.enabled:
         raise SystemExit("Set TELEGRAM_BOT_TOKEN first (from @BotFather).")
-    chat = n._ensure_chat()
+    try:
+        me = n._call("getMe")
+        print(f"Bot token OK: @{me.get('username')}")
+        chat = n._ensure_chat()
+    except TelegramError as exc:
+        raise SystemExit(f"Telegram: {exc}")
     print(f"Telegram chat id: {chat} (saved to {STATE_FILE})")
     if args.test or args.photo:
         from .rules import Alert

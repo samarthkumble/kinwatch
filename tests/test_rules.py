@@ -101,3 +101,18 @@ def test_template_description_not_repeated_in_alert():
     e["vision"]["description"] = "A package has been left at the front door. Also in view: snow."
     msg = evaluate([ev(1, "07:40", "person"), e], ms("09:05"))[0].message
     assert msg.count("package") == 1 and msg.endswith("Also in view: snow.")
+
+
+def test_long_daytime_quiet_after_being_seen_alerts():
+    events = [ev(1, "07:40", "person"), ev(2, "09:10", "person"), ev(3, "10:00", "animal")]
+    assert rules_fired(events, "13:00") == []                      # 3 h 50 min
+    alerts = evaluate(events, ms("13:20"))
+    assert [a.rule for a in alerts] == ["long_quiet"]
+    assert "09:10" in alerts[0].message and alerts[0].title.startswith("Ajji hasn't been seen")
+    assert alerts[0].key == "long_quiet:e2"
+
+
+def test_long_quiet_not_at_night_and_not_if_never_seen():
+    events = [ev(1, "07:40", "person")]
+    assert "long_quiet" not in rules_fired(events, "22:30")       # night: expected quiet
+    assert rules_fired([], "13:00") == ["no_activity"]             # never seen -> R1 only

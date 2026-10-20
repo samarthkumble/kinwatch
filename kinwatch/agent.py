@@ -1,8 +1,8 @@
 """Ask KinWatch: a Strands agent on Amazon Bedrock that answers a family member's
-questions ("How is Amma doing today?") by calling the KinWatch MCP server.
+questions ("How is Ajji doing today?") by calling the KinWatch MCP server.
 
   python -m kinwatch.mcp_server                       # terminal 1
-  python -m kinwatch.agent "How is Amma doing today?"  # terminal 2
+  python -m kinwatch.agent "How is Ajji doing today?"  # terminal 2
 
 If the MCP server isn't running, the agent uses the same tools in-process, so
 it still works (and says which path it used).
@@ -29,21 +29,24 @@ MCP_URL = os.environ.get("KINWATCH_MCP_URL",
 
 
 def system_prompt() -> str:
+    from datetime import datetime
+    from .rules import IST
     name = load_config().parent_name
+    now = datetime.now(IST).strftime("%H:%M")
     return (
-        f"You are KinWatch, a calm, caring assistant for a family member whose parent, "
-        f"{name}, lives alone. You can see {name}'s Ring front-door camera through tools. "
-        "Always call tools before answering; never invent events or times. "
-        "Answer in 2 to 4 short sentences a busy person can read on a phone: first the "
-        "direct answer, then the evidence (times, what the camera saw), then one "
-        "suggestion only if something needs attention (for example, 'consider calling "
-        f"{name}'). Mention ignored noise (birds, empty frames) only if it reassures. "
-        "Times are in IST, 24-hour format.")
+        f"You are KinWatch, a calm, caring assistant for a family member whose grandmother "
+        f"or parent, {name}, lives alone. You can see {name}'s Ring front-door camera through "
+        f"tools. The current time is {now} IST. "
+        "Always call get_today_status first and base your answer only on its 'facts'; "
+        "never invent events or times. "
+        "Reply in 2 to 4 short plain sentences, no lists, no headings, no bold: first the "
+        "direct answer, then the evidence (times, what the camera saw), then one suggestion "
+        f"only if something needs attention (for example, calling {name}).")
 
 
 AGENT_MODEL = os.environ.get("KINWATCH_AGENT_MODEL", "auto").lower()
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://127.0.0.1:11434")
-OLLAMA_MODEL = os.environ.get("KINWATCH_OLLAMA_MODEL", "qwen2.5:3b")
+OLLAMA_MODEL = os.environ.get("KINWATCH_OLLAMA_MODEL", "qwen2.5:7b")
 _REFUSED = ("Operation not allowed", "AccessDenied", "currently being verified",
             "Unable to locate credentials", "not authorized")
 
@@ -51,7 +54,7 @@ _REFUSED = ("Operation not allowed", "AccessDenied", "currently being verified",
 def _model(kind: str = "bedrock"):
     if kind == "ollama":
         from strands.models.ollama import OllamaModel
-        return OllamaModel(OLLAMA_HOST, model_id=OLLAMA_MODEL, temperature=0.2)
+        return OllamaModel(OLLAMA_HOST, model_id=OLLAMA_MODEL, temperature=0)
     return BedrockModel(model_id=MODEL_ID, region_name=REGION, temperature=0.2,
                         api_key=os.environ.get("AWS_BEARER_TOKEN_BEDROCK") or None)
 
@@ -137,7 +140,7 @@ ask.last_model = "bedrock"
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Ask KinWatch a question")
-    ap.add_argument("question", nargs="*", default=["How is Amma doing today?"])
+    ap.add_argument("question", nargs="*", default=["How is Ajji doing today?"])
     ap.add_argument("--local", action="store_true", help="skip the MCP server")
     ap.add_argument("--model", choices=["auto", "bedrock", "ollama"],
                     help="which model to use (default: KINWATCH_AGENT_MODEL or auto)")

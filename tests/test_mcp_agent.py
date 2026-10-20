@@ -24,7 +24,7 @@ def test_mcp_tools_answer_from_the_database(seeded):
     assert [e["label"] for e in mcp_server.list_events(at="09:15")] == ["animal", "package", "person"]
     assert mcp_server.list_events(label="person", at="09:15")[0]["time"] == "07:40"
     assert mcp_server.get_alerts("09:15")[0]["title"].startswith("A delivery")
-    assert mcp_server.get_routine()["parent_name"] == "Amma"
+    assert mcp_server.get_routine()["parent_name"] == "Ajji"
     with pytest.raises(ValueError):
         mcp_server.get_today_status("9am")
 
@@ -43,14 +43,14 @@ def test_agent_local_path_wires_tools_and_prompt(seeded, monkeypatch):
             built.update(tools=tools, prompt=system_prompt)
 
         def __call__(self, q):
-            return "Amma was seen at 07:40. A delivery has been waiting since 08:00."
+            return "Ajji was seen at 07:40. A delivery has been waiting since 08:00."
 
     monkeypatch.setattr(agent, "Agent", FakeAgent)
     monkeypatch.setattr(agent, "_model", lambda kind="bedrock": kind)
-    answer, path = agent.ask("How is Amma doing today?", use_mcp=False, model="bedrock")
+    answer, path = agent.ask("How is Ajji doing today?", use_mcp=False, model="bedrock")
     assert path == "local" and "07:40" in answer
     assert len(built["tools"]) == 4 and "never invent" in built["prompt"]
-    assert "Amma" in built["prompt"]
+    assert "Ajji" in built["prompt"]
 
 
 def test_agent_falls_back_to_ollama_when_bedrock_refused(seeded, monkeypatch, capsys):
@@ -64,12 +64,21 @@ def test_agent_falls_back_to_ollama_when_bedrock_refused(seeded, monkeypatch, ca
             used.append(self.model)
             if self.model == "bedrock":
                 raise RuntimeError("ValidationException: Operation not allowed")
-            return "Amma was seen at 07:40."
+            return "Ajji was seen at 07:40."
 
     monkeypatch.setattr(agent, "Agent", FakeAgent)
     monkeypatch.setattr(agent, "_model", lambda kind="bedrock": kind)
-    answer, _ = agent.ask("How is Amma?", use_mcp=False, model="auto")
+    answer, _ = agent.ask("How is Ajji?", use_mcp=False, model="auto")
     assert used == ["bedrock", "ollama"] and agent.ask.last_model == "ollama"
     assert "using local Ollama model" in capsys.readouterr().out
     with pytest.raises(RuntimeError):
-        agent.ask("How is Amma?", use_mcp=False, model="bedrock")
+        agent.ask("How is Ajji?", use_mcp=False, model="bedrock")
+
+
+def test_status_facts_are_plain_and_correct(seeded):
+    f = mcp_server.get_today_status("09:15")["facts"]
+    assert f[0].startswith("The current time is 09:15")
+    assert any("last seen at the front door at 07:40" in x for x in f)
+    assert any(x.startswith("Open alert: A delivery") for x in f)
+    assert mcp_server.get_today_status("07:30")["facts"][1] == \
+        "Ajji has not been seen at the front door yet today."

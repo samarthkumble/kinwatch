@@ -4,6 +4,7 @@ KinWatch alerts on what DIDN'T happen as well as what did:
   R1 no_activity    - no sign of the parent at the door by the morning deadline
   R2 package_waiting - a delivery (e.g. medicines) left uncollected for N minutes
   R3 night_visitor  - a person at the door during night hours
+  R4 long_quiet     - seen earlier today, but nobody at the door for too long in the daytime
 Animals and empty frames never alert: that's the "smart, not noisy" part.
 
 Rules are pure functions of (events, config, now), so a demo clock can
@@ -24,7 +25,7 @@ NOISE_LABELS = ("animal", "nothing")
 
 @dataclass
 class RoutineConfig:
-    parent_name: str = "Amma"
+    parent_name: str = "Ajji"
     tz: timezone = IST
     day_start: str = "05:00"          # activity before this counts as night
     activity_deadline: str = "10:00"  # expect to see the parent by this time
@@ -32,6 +33,7 @@ class RoutineConfig:
     night_start: str = "22:00"
     night_end: str = "05:00"
     camera_name: str = "front door"   # how alerts refer to the Ring camera
+    quiet_hours: int = 4              # daytime gap after which a silent door is worth a call
     activity_labels: tuple = ("person",)
 
 
@@ -118,8 +120,8 @@ def evaluate(events: list[dict], now_ms: int, cfg: RoutineConfig | None = None) 
             alerts.append(Alert(
                 key=f"no_activity:{now.date()}", rule="no_activity", severity="high",
                 title=f"No sign of {cfg.parent_name} yet this morning",
-                message=(f"It's {now:%H:%M} and nobody has been seen at the {cfg.camera_name} since "
-                         f"{cfg.day_start}. {cfg.parent_name} usually starts the day before "
+                message=(f"It's {now:%H:%M} and {cfg.parent_name} hasn't been seen at the "
+                         f"{cfg.camera_name} yet today. She's usually up and about before "
                          f"{cfg.activity_deadline}. Maybe give her a call?"),
                 at_ms=now_ms))
 
@@ -168,6 +170,28 @@ def evaluate(events: list[dict], now_ms: int, cfg: RoutineConfig | None = None) 
                 message=(f"At {t:%H:%M} a person was seen at the {cfg.camera_name}. "
                          f"{_detail(v)}").strip(),
                 event_id=e["id"], at_ms=e["start_ms"]))
+    # R4: long daytime quiet after being seen. A doorbell can't see a fall inside the
+    # house, but the routine stopping (no door activity for hours) is the earliest
+    # signal it can give.
+    day_end = _at(now, cfg.night_start)
+    if today_start <= now < day_end:
+        people = [e for e in evs
+                  if today_start <= _local(e["start_ms"], cfg.tz) <= now
+                  and (e.get("kw_label") in cfg.activity_labels
+                       or _vision(e).get("person_visible"))]
+        if people:
+            last = people[-1]
+            quiet = (now_ms - last["start_ms"]) / 60000
+            if quiet >= cfg.quiet_hours * 60:
+                t = _local(last["start_ms"], cfg.tz)
+                alerts.append(Alert(
+                    key=f"long_quiet:{last['id']}", rule="long_quiet", severity="high",
+                    title=f"{cfg.parent_name} hasn't been seen for {fmt_duration(quiet)}",
+                    message=(f"{cfg.parent_name} was last seen at the {cfg.camera_name} at "
+                             f"{t:%H:%M}. Nobody has been there since, which is longer than "
+                             f"the {cfg.quiet_hours} h you set for the daytime. "
+                             f"Maybe give her a call?"),
+                    event_id=last["id"], at_ms=now_ms))
     return alerts
 
 

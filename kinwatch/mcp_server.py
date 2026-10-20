@@ -47,8 +47,26 @@ def get_today_status(at: str | None = None) -> dict:
     today's counts (camera events, times someone was seen, deliveries, noise).
     `at` (optional, "HH:MM") evaluates the day as if it were that time."""
     d = _today(at)
-    return {"time": d["now"], "date": d["date"], "status": d["status"],
-            "summary": d["summary"], "open_alerts": len(d["alerts"])}
+    return {"current_time": d["now"], "date": d["date"], "facts": facts(d),
+            "status": d["status"], "summary": d["summary"], "open_alerts": len(d["alerts"])}
+
+
+def facts(d: dict) -> list[str]:
+    """Plain one-line facts. Small models misread nested JSON; they rarely misread these."""
+    name = d["settings"]["parent_name"]
+    s = d["summary"]
+    out = [f"The current time is {d['now']} IST on {d['date']}."]
+    if s.get("last_seen"):
+        out.append(f"{name} was last seen at the front door at {s['last_seen']}.")
+    else:
+        out.append(f"{name} has not been seen at the front door yet today.")
+    out.append(f"Camera events today: {s['events']} ({s.get('ignored_as_noise', 0)} ignored "
+               f"as noise such as birds), deliveries: {s.get('packages', 0)}.")
+    for a in d["alerts"]:
+        out.append(f"Open alert: {a['title']}. {a['message']}")
+    if not d["alerts"]:
+        out.append("There are no open alerts.")
+    return out
 
 
 @mcp.tool()

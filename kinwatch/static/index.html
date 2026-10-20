@@ -191,7 +191,7 @@ button.secondary:hover { background: #E6EAF3; }
       <p class="sub">Answers come from today's camera events, never guesses.</p>
       <form id="ask">
         <label class="sr-only" for="ask-q">Your question</label>
-        <input id="ask-q" name="question" placeholder="Has Amma come outside yet?" autocomplete="off">
+        <input id="ask-q" name="question" placeholder="Has Ajji come to the door today?" autocomplete="off">
         <div class="btns"><button type="submit">Ask</button></div>
       </form>
       <p class="answer" id="ask-answer" aria-live="polite" hidden></p>
@@ -204,6 +204,8 @@ button.secondary:hover { background: #E6EAF3; }
         <label>Name<input name="parent_name" autocomplete="off" required></label>
         <label>Usually up by<span>Alert if nobody is seen at the door by this time</span>
           <input name="activity_deadline" type="time" required></label>
+        <label>Quiet for too long (hours)<span>Alert if, after being seen, nobody comes to the door for this long in the daytime</span>
+          <input name="quiet_hours" type="number" min="1" max="12" required></label>
         <label>Package wait (minutes)<span>Alert if a delivery sits outside longer than this</span>
           <input name="package_minutes" type="number" min="5" max="720" required></label>
         <div class="row2">

@@ -1,4 +1,4 @@
-"""Caregiver dashboard: is Amma okay today?
+"""Caregiver dashboard: is Ajji okay today?
 
   python -m kinwatch.dashboard            # then open http://127.0.0.1:8050
   python -m kinwatch.dashboard --port 9000

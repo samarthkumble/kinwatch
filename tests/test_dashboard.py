@@ -86,14 +86,14 @@ def test_settings_roundtrip_and_validation(client):
 
 def test_ask_endpoint(client, monkeypatch):
     from kinwatch import agent
-    monkeypatch.setattr(agent, "ask", lambda q: ("Amma was seen at 07:40.", "mcp"))
-    r = client.post("/api/ask", json={"question": "How is Amma?"})
+    monkeypatch.setattr(agent, "ask", lambda q: ("Ajji was seen at 07:40.", "mcp"))
+    r = client.post("/api/ask", json={"question": "How is Ajji?"})
     body = r.get_json()
-    assert r.status_code == 200 and body["answer"] == "Amma was seen at 07:40." and body["via"] == "mcp"
+    assert r.status_code == 200 and body["answer"] == "Ajji was seen at 07:40." and body["via"] == "mcp"
     assert client.post("/api/ask", json={"question": " "}).status_code == 400
 
     def boom(q):
         raise RuntimeError("AccessDeniedException: Your account is currently being verified")
     monkeypatch.setattr(agent, "ask", boom)
-    r = client.post("/api/ask", json={"question": "How is Amma?"})
+    r = client.post("/api/ask", json={"question": "How is Ajji?"})
     assert r.status_code == 502 and "verifying" in r.get_json()["error"]
