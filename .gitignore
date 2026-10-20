@@ -6,3 +6,5 @@ __pycache__/
 .pytest_cache/
 .kinwatch_telegram
 kinwatch_settings.json
+VIDEO_SCRIPT.md
+DEVPOST.md
