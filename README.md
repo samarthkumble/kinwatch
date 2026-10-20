@@ -4,6 +4,8 @@ A Ring caretaking agent for parents who live alone. Built for the Amazon Develop
 
 > Status: Ring data layer, Bedrock vision, routine rules, Telegram alerts, caregiver dashboard, MCP server and the Strands agent all work.
 
+![How KinWatch works](docs/architecture.png)
+
 ## Quick start
 
 ```bash

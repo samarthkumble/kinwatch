@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KinWatch architecture</title>
+<style>
+:root {
+  --door: #233056; --door-2: #2E3D6B; --ink: #1D2433; --muted: #5E6779;
+  --limewash: #EEF1F4; --surface: #FFFFFF; --line: #C9D0DA;
+  --marigold: #E3A21A; --marigold-soft: #FBF0D6; --leaf: #2E7A57; --leaf-soft: #E1F0E8;
+  --aws: #8A5A00;
+}
+* { box-sizing: border-box; }
+body { margin: 0; width: 1920px; height: 1080px; background: var(--limewash); color: var(--ink);
+  font-family: "Segoe UI", system-ui, sans-serif; position: relative; overflow: hidden; }
+header { background: var(--door); color: #F3F5FA; padding: 34px 72px 46px; position: relative; }
+header::after { content: ""; position: absolute; left: 0; right: 0; bottom: -13px; height: 26px;
+  background: radial-gradient(circle at 13px 0, var(--marigold) 11px, transparent 12px) 0 0 / 26px 26px repeat-x; }
+h1 { margin: 0; font-size: 50px; letter-spacing: -0.02em; }
+header p { margin: 8px 0 0; font-size: 24px; color: #C9D0E2; }
+
+.grid { position: absolute; top: 262px; left: 72px; right: 72px; bottom: 110px;
+  display: grid; grid-template-columns: 1fr 1.15fr 1fr 1fr; gap: 0 96px; }
+.col { display: flex; flex-direction: column; gap: 30px; justify-content: flex-start; }
+.nb { white-space: nowrap; }
+.col h2 { margin: 0 0 -6px; font-size: 20px; color: var(--muted); font-weight: 600; }
+.box { background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 18px 20px; position: relative; z-index: 2; }
+.box h3 { margin: 0 0 6px; font-size: 25px; }
+.box p { margin: 0; font-size: 18px; color: var(--muted); line-height: 1.4; }
+.box.ring { border-color: var(--door); }
+.box.ring h3 { color: var(--door); }
+.box.aws { border-color: var(--marigold); background: var(--marigold-soft); }
+.box.aws h3 { color: var(--aws); }
+.box.out { border-color: var(--leaf); }
+.box.out h3 { color: var(--leaf); }
+.box.next { border-style: dashed; background: transparent; }
+.tag { display: inline-block; font-size: 15px; font-weight: 700; padding: 2px 10px; border-radius: 999px;
+  background: var(--door); color: #fff; margin-bottom: 8px; }
+.aws .tag { background: var(--marigold); color: #3A2600; }
+.out .tag { background: var(--leaf); }
+.rules { margin: 8px 0 0; padding-left: 20px; font-size: 18px; color: var(--ink); line-height: 1.45; }
+svg#wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; }
+footer { position: absolute; left: 72px; right: 72px; bottom: 34px; font-size: 19px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>How KinWatch works</h1>
+  <p>From a Ring doorbell event to "Is Ajji okay today?"</p>
+</header>
+
+<svg id="wires"><defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#5E6779"/></marker>
+  <marker id="arrow-dash" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#9AA3B2"/></marker>
+</defs></svg>
+
+<div class="grid">
+  <div class="col">
+    <h2>Ring</h2>
+    <div class="box ring" id="doorbell"><span class="tag">Ring</span>
+      <h3>Doorbell camera</h3>
+      <p>Ring Developers Playground: simulated Package, Vehicle and Motion events</p></div>
+    <div class="box ring" id="ringapi"><span class="tag">Ring</span>
+      <h3>Ring Partner API</h3>
+      <p>Devices, event history, snapshots (at_timestamp), video clips</p></div>
+  </div>
+
+  <div class="col">
+    <h2>KinWatch</h2>
+    <div class="box" id="poller">
+      <h3>Poller</h3>
+      <p>New events, snapshot or clip frame. Record / replay mode</p></div>
+    <div class="box aws" id="vision"><span class="tag">AWS</span>
+      <h3>Vision</h3>
+      <p>Amazon Rekognition: person, package, vehicle, animal. <span class="nb">Amazon Bedrock</span> <span class="nb">(Nova 2 Lite)</span> ready</p></div>
+    <div class="box" id="rules">
+      <h3>Routine rules</h3>
+      <ul class="rules">
+        <li>No sign of Ajji by 10:00</li>
+        <li>Package waiting too long</li>
+        <li>Quiet for too long</li>
+        <li>Someone at the door at night</li></ul></div>
+  </div>
+
+  <div class="col">
+    <h2>Family</h2>
+    <div class="box out" id="telegram"><span class="tag">Alert</span>
+      <h3>Telegram message</h3>
+      <p>With the Ring snapshot. Sent once</p></div>
+    <div class="box out" id="dash"><span class="tag">Web</span>
+      <h3>Caregiver dashboard</h3>
+      <p>Today in one sentence, timeline, routine</p></div>
+    <div class="box out" id="mcp"><span class="tag">MCP</span>
+      <h3>KinWatch MCP server</h3>
+      <p>Streamable HTTP, protocol <span class="nb">2025-11-25</span></p></div>
+  </div>
+
+  <div class="col">
+    <h2>Assistants</h2>
+    <div class="box aws" id="agent"><span class="tag">AWS</span>
+      <h3>Strands agent</h3>
+      <p>"Ask KinWatch". Local model via Ollama, or Bedrock</p></div>
+    <div class="box next" id="alexa">
+      <h3>Alexa+ (next)</h3>
+      <p>Same MCP tools: "Alexa, how is Ajji today?"</p></div>
+  </div>
+</div>
+
+<footer>Runs today on the real Ring API (Developers Playground). Open source with a replay mode: github.com/samarthkumble/kinwatch</footer>
+
+<script>
+const svg = document.getElementById("wires");
+const r = (id) => document.getElementById(id).getBoundingClientRect();
+function wire(a, b, opts = {}) {
+  const A = r(a), B = r(b);
+  let x1, y1, x2, y2, d;
+  if (opts.down) {                     // vertical link inside a column
+    x1 = A.left + A.width / 2; y1 = A.bottom; x2 = x1; y2 = B.top;
+    d = `M${x1},${y1} L${x2},${y2 - 2}`;
+  } else {                             // horizontal link to the next column
+    x1 = A.right; y1 = A.top + A.height / 2; x2 = B.left; y2 = B.top + B.height / 2;
+    const mx = (x1 + x2) / 2;
+    d = `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2 - 2},${y2}`;
+  }
+  const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  p.setAttribute("d", d); p.setAttribute("fill", "none");
+  p.setAttribute("stroke", opts.dashed ? "#9AA3B2" : "#5E6779");
+  p.setAttribute("stroke-width", "3");
+  if (opts.dashed) p.setAttribute("stroke-dasharray", "9 8");
+  p.setAttribute("marker-end", `url(#${opts.dashed ? "arrow-dash" : "arrow"})`);
+  svg.appendChild(p);
+}
+wire("doorbell", "ringapi", { down: true });
+wire("ringapi", "poller");
+wire("poller", "vision", { down: true });
+wire("vision", "rules", { down: true });
+wire("rules", "telegram");
+wire("rules", "dash");
+wire("rules", "mcp");
+wire("mcp", "agent");
+wire("mcp", "alexa", { dashed: true });
+</script>
+</body>
+</html>
