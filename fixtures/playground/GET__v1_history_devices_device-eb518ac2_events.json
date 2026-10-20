@@ -1,0 +1,196 @@
+{
+  "data": [
+    {
+      "type": "history-events",
+      "id": "ava1.ring.history.event.HNWKM66B7PA2WUHQOPLMKBTGPV5776OJLONVT3WCQBHMMNORWFIU6HH4YW5D3VX4663ILS2SSO2T273Q3SNKTFRQID3Z6RRL",
+      "attributes": {
+        "is_third_party_reviewed": true,
+        "event_type": "on_demand",
+        "start": 1792476798560,
+        "end": 1792476830302
+      },
+      "relationships": {
+        "cv_detections": {
+          "data": []
+        },
+        "source": {
+          "data": {
+            "type": "devices",
+            "id": "ava1.ring.device.ZMNFUG6R2544T45H6V7SUAHNRYE2SIXEB4RWL6JSZDN5RA7YYQ3NB64WNV326X6H5JMWEE3SVDYP7VAB2HMPZXXPKNQ7TNZ4"
+          }
+        }
+      },
+      "meta": {
+        "riid": null
+      }
+    },
+    {
+      "type": "history-events",
+      "id": "ava1.ring.history.event.MSSVI3OSNNLXK6PFAIYNCCJPR5VCJKED4OT4FMD275MIU7MTNVCOTDUEMNKYFFTNPO4TJWOZ3EA6HNU2SVRDD3L7MFAHPJAF",
+      "attributes": {
+        "is_third_party_reviewed": true,
+        "event_type": "on_demand",
+        "end": 1792398745546,
+        "start": 1792398713804
+      },
+      "relationships": {
+        "cv_detections": {
+          "data": []
+        },
+        "source": {
+          "data": {
+            "type": "devices",
+            "id": "ava1.ring.device.ZMNFUG6R2544T45H6V7SUAHNRYE2SIXEB4RWL6JSZDN5RA7YYQ3NB64WNV326X6H5JMWEE3SVDYP7VAB2HMPZXXPKNQ7TNZ4"
+          }
+        }
+      },
+      "meta": {
+        "riid": null
+      }
+    },
+    {
+      "type": "history-events",
+      "id": "ava1.ring.history.event.JPWA5QVTGZLLE24DWVKIVGF75QZOVCTM3POOQV4YIE5324K6YD3TSTNRL6KJIHPSYJBDQU67P266POTMZKDZG6BZLK5GIYDR",
+      "attributes": {
+        "start": 1792394140917,
+        "event_type": "on_demand",
+        "is_third_party_reviewed": true,
+        "end": 1792394172660
+      },
+      "relationships": {
+        "source": {
+          "data": {
+            "type": "devices",
+            "id": "ava1.ring.device.ZMNFUG6R2544T45H6V7SUAHNRYE2SIXEB4RWL6JSZDN5RA7YYQ3NB64WNV326X6H5JMWEE3SVDYP7VAB2HMPZXXPKNQ7TNZ4"
+          }
+        },
+        "cv_detections": {
+          "data": []
+        }
+      },
+      "meta": {
+        "riid": null
+      }
+    },
+    {
+      "type": "history-events",
+      "id": "ava1.ring.history.event.V7VIDCFEAOHEXIGD54AX53QBG2RFOF74O7QBWDZWVPV6HTX2KWLIDK62NIUWH6YQZUWDKWPOPSDUJGBKMEHVY6TXNJ27PHIZ",
+      "attributes": {
+        "end": 1792393433301,
+        "start": 1792393428642,
+        "is_third_party_reviewed": true,
+        "event_type": "on_demand"
+      },
+      "relationships": {
+        "source": {
+          "data": {
+            "type": "devices",
+            "id": "ava1.ring.device.ZMNFUG6R2544T45H6V7SUAHNRYE2SIXEB4RWL6JSZDN5RA7YYQ3NB64WNV326X6H5JMWEE3SVDYP7VAB2HMPZXXPKNQ7TNZ4"
+          }
+        },
+        "cv_detections": {
+          "data": []
+        }
+      },
+      "meta": {
+        "riid": null
+      }
+    },
+    {
+      "type": "history-events",
+      "id": "ava1.ring.history.event.RVYFCU3A2YD6P4FZ2AJYKKAFMRHRKSST273RUTZIVHUSJOEIHZCT4VUH2TWQX2IXLTV5XJRWEMKAGSX7CSKQS3ZLILZ6HUKH",
+      "attributes": {
+        "is_third_party_reviewed": true,
+        "end": 1792393368767,
+        "start": 1792393348536,
+        "event_type": "on_demand"
+      },
+      "relationships": {
+        "source": {
+          "data": {
+            "type": "devices",
+            "id": "ava1.ring.device.ZMNFUG6R2544T45H6V7SUAHNRYE2SIXEB4RWL6JSZDN5RA7YYQ3NB64WNV326X6H5JMWEE3SVDYP7VAB2HMPZXXPKNQ7TNZ4"
+          }
+        },
+        "cv_detections": {
+          "data": []
+        }
+      },
+      "meta": {
+        "riid": null
+      }
+    },
+    {
+      "type": "history-events",
+      "id": "ava1.ring.history.event.A5K27PNEOKFC5M5BSJ3Q2JZY2MNQYR5OFURLMEW3X5VW6N3B5MKOWP243EK6ZFJI55G5MKO6TJUDQ5FYNR6WVXUGVSSAZNG3",
+      "attributes": {
+        "is_third_party_reviewed": true,
+        "end": 1792393277226,
+        "start": 1792393257113,
+        "event_type": "on_demand"
+      },
+      "relationships": {
+        "source": {
+          "data": {
+            "type": "devices",
+            "id": "ava1.ring.device.ZMNFUG6R2544T45H6V7SUAHNRYE2SIXEB4RWL6JSZDN5RA7YYQ3NB64WNV326X6H5JMWEE3SVDYP7VAB2HMPZXXPKNQ7TNZ4"
+          }
+        },
+        "cv_detections": {
+          "data": []
+        }
+      },
+      "meta": {
+        "riid": null
+      }
+    },
+    {
+      "type": "history-events",
+      "id": "ava1.ring.history.event.CLQQG2DMRXCFON3SQP5QKT442Z5ZOVSSN4W4TKSTSJWTQTOBORPFY7OCDLRG5VS4DOVQTDTLTRKPU3U6CJS3L5DTNYW4HKYB",
+      "attributes": {
+        "start": 1792391895808,
+        "end": 1792391935458,
+        "event_type": "on_demand",
+        "is_third_party_reviewed": true
+      },
+      "relationships": {
+        "source": {
+          "data": {
+            "type": "devices",
+            "id": "ava1.ring.device.ZMNFUG6R2544T45H6V7SUAHNRYE2SIXEB4RWL6JSZDN5RA7YYQ3NB64WNV326X6H5JMWEE3SVDYP7VAB2HMPZXXPKNQ7TNZ4"
+          }
+        },
+        "cv_detections": {
+          "data": []
+        }
+      },
+      "meta": {
+        "riid": null
+      }
+    },
+    {
+      "type": "history-events",
+      "id": "ava1.ring.history.event.OAR55N6CYSOSJV3TPEFOBUFAFMVT5AJQVJPGZTPFMCLPKRV36XHJ5OZMOMJYVEW73AOTR5SW7H4LYMJSXZU3HU6OIIYTVSBG",
+      "attributes": {
+        "event_type": "on_demand",
+        "start": 1792391858967,
+        "is_third_party_reviewed": true,
+        "end": 1792391890709
+      },
+      "relationships": {
+        "cv_detections": {
+          "data": []
+        },
+        "source": {
+          "data": {
+            "type": "devices",
+            "id": "ava1.ring.device.ZMNFUG6R2544T45H6V7SUAHNRYE2SIXEB4RWL6JSZDN5RA7YYQ3NB64WNV326X6H5JMWEE3SVDYP7VAB2HMPZXXPKNQ7TNZ4"
+          }
+        }
+      },
+      "meta": {
+        "riid": null
+      }
+    }
+  ]
+}

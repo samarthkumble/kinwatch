@@ -46,8 +46,30 @@ def test_agent_local_path_wires_tools_and_prompt(seeded, monkeypatch):
             return "Amma was seen at 07:40. A delivery has been waiting since 08:00."
 
     monkeypatch.setattr(agent, "Agent", FakeAgent)
-    monkeypatch.setattr(agent, "_model", lambda: None)
-    answer, path = agent.ask("How is Amma doing today?", use_mcp=False)
+    monkeypatch.setattr(agent, "_model", lambda kind="bedrock": kind)
+    answer, path = agent.ask("How is Amma doing today?", use_mcp=False, model="bedrock")
     assert path == "local" and "07:40" in answer
     assert len(built["tools"]) == 4 and "never invent" in built["prompt"]
     assert "Amma" in built["prompt"]
+
+
+def test_agent_falls_back_to_ollama_when_bedrock_refused(seeded, monkeypatch, capsys):
+    used = []
+
+    class FakeAgent:
+        def __init__(self, model, tools, system_prompt, callback_handler):
+            self.model = model
+
+        def __call__(self, q):
+            used.append(self.model)
+            if self.model == "bedrock":
+                raise RuntimeError("ValidationException: Operation not allowed")
+            return "Amma was seen at 07:40."
+
+    monkeypatch.setattr(agent, "Agent", FakeAgent)
+    monkeypatch.setattr(agent, "_model", lambda kind="bedrock": kind)
+    answer, _ = agent.ask("How is Amma?", use_mcp=False, model="auto")
+    assert used == ["bedrock", "ollama"] and agent.ask.last_model == "ollama"
+    assert "using local Ollama model" in capsys.readouterr().out
+    with pytest.raises(RuntimeError):
+        agent.ask("How is Amma?", use_mcp=False, model="bedrock")

@@ -13,7 +13,8 @@ from pathlib import Path
 from .rules import RoutineConfig
 
 SETTINGS_FILE = Path("kinwatch_settings.json")
-EDITABLE = ("parent_name", "activity_deadline", "package_minutes", "night_start", "night_end")
+EDITABLE = ("parent_name", "activity_deadline", "package_minutes", "night_start", "night_end",
+            "camera_name")
 _HHMM = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
@@ -40,6 +41,8 @@ def validate(data: dict) -> dict:
             val = str(val).strip()[:40]
             if not val:
                 raise ValueError("Enter a name for the person you're looking after.")
+        elif key == "camera_name":
+            val = str(val).strip()[:40] or "front door"
         elif key == "package_minutes":
             try:
                 val = int(val)

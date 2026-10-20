@@ -1,0 +1,8 @@
+{
+  "label": "package",
+  "description": "A package has been left at the front door.",
+  "person_visible": false,
+  "package_visible": true,
+  "concern": false,
+  "model": "amazon-rekognition-detectlabels"
+}

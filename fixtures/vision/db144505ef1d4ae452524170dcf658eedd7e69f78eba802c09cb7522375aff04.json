@@ -1,0 +1,8 @@
+{
+  "label": "animal",
+  "description": "An animal is near the front door (bird). Also in view: bird feeder.",
+  "person_visible": false,
+  "package_visible": false,
+  "concern": false,
+  "model": "amazon-rekognition-detectlabels"
+}

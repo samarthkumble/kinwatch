@@ -88,7 +88,8 @@ def test_ask_endpoint(client, monkeypatch):
     from kinwatch import agent
     monkeypatch.setattr(agent, "ask", lambda q: ("Amma was seen at 07:40.", "mcp"))
     r = client.post("/api/ask", json={"question": "How is Amma?"})
-    assert r.status_code == 200 and r.get_json() == {"answer": "Amma was seen at 07:40.", "via": "mcp"}
+    body = r.get_json()
+    assert r.status_code == 200 and body["answer"] == "Amma was seen at 07:40." and body["via"] == "mcp"
     assert client.post("/api/ask", json={"question": " "}).status_code == 400
 
     def boom(q):

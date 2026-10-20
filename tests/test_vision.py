@@ -92,3 +92,83 @@ def test_labeller_survives_missing_aws(tmp_path):
     lab.enabled = True
     lab.label(store, "missing", img)               # must not raise
     assert lab.enabled is False
+
+
+PACKAGE_LABELS = [
+    {"Name": "Cardboard", "Confidence": 98.1, "Parents": [{"Name": "Box"}]},
+    {"Name": "Box", "Confidence": 97.5, "Parents": []},
+    {"Name": "Snow", "Confidence": 95.0, "Parents": [{"Name": "Outdoors"}]},
+    {"Name": "Staircase", "Confidence": 90.0, "Parents": []},
+]
+BIRD_LABELS = [
+    {"Name": "Bird", "Confidence": 99.0, "Parents": [{"Name": "Animal"}]},
+    {"Name": "Bird Feeder", "Confidence": 92.0, "Parents": []},
+    {"Name": "Snow", "Confidence": 90.0, "Parents": []},
+]
+
+
+class FakeRekognition:
+    def __init__(self, labels):
+        self.labels, self.calls = labels, 0
+
+    def detect_labels(self, **kw):
+        self.calls += 1
+        assert kw["Image"]["Bytes"]
+        return {"Labels": self.labels}
+
+
+def test_rekognition_labels_map_to_kinwatch_labels():
+    from kinwatch.vision import rekognition_to_result
+    pkg = rekognition_to_result(PACKAGE_LABELS)
+    assert pkg.label == "package" and pkg.package_visible and not pkg.person_visible
+    assert pkg.description.startswith("A package has been left")
+    assert "snow" in pkg.description
+    bird = rekognition_to_result(BIRD_LABELS)
+    assert bird.label == "animal" and "bird" in bird.description
+    person = rekognition_to_result([{"Name": "Person", "Confidence": 99}] + PACKAGE_LABELS)
+    assert person.label == "person" and person.package_visible   # person outranks package
+    assert rekognition_to_result([{"Name": "Snow", "Confidence": 90}]).label == "nothing"
+
+
+def test_auto_falls_back_to_rekognition_when_bedrock_refused(tmp_path, capsys):
+    class Refused:
+        calls = 0
+
+        def converse(self, **kw):
+            Refused.calls += 1
+            raise RuntimeError("An error occurred (ValidationException) when calling the "
+                               "Converse operation: Operation not allowed")
+
+    rek = FakeRekognition(PACKAGE_LABELS)
+    v = Vision(mode="live", cache_dir=tmp_path / "c", client=Refused(),
+               rekognition_client=rek, backend="auto")
+    for i in range(2):
+        img = tmp_path / f"{i}.jpg"
+        img.write_bytes(b"img%d" % i)
+        r = v.describe(img)
+        assert r.label == "package" and r.model == "amazon-rekognition-detectlabels"
+    assert Refused.calls == 1 and rek.calls == 2        # Bedrock not retried
+    assert "using Amazon Rekognition" in capsys.readouterr().out
+
+
+def test_bedrock_only_mode_does_not_fall_back(tmp_path):
+    class Refused:
+        def converse(self, **kw):
+            raise RuntimeError("Operation not allowed")
+    img = tmp_path / "x.jpg"
+    img.write_bytes(b"x")
+    v = Vision(mode="live", cache_dir=tmp_path / "c", client=Refused(),
+               rekognition_client=FakeRekognition(PACKAGE_LABELS), backend="bedrock")
+    with pytest.raises(RuntimeError):
+        v.describe(img)
+
+
+def test_rekognition_on_real_playground_package_frame():
+    # labels Rekognition returned in the console for our real Ring package snapshot
+    from kinwatch.vision import rekognition_to_result
+    real = [{"Name": "Outdoors", "Confidence": 99.9}, {"Name": "Nature", "Confidence": 99.9},
+            {"Name": "Weather", "Confidence": 99.5}, {"Name": "Box", "Confidence": 79.1},
+            {"Name": "Snow", "Confidence": 62.9}, {"Name": "Hot Tub", "Confidence": 62.4}]
+    r = rekognition_to_result(real)
+    assert r.label == "package" and r.package_visible
+    assert r.description == "A package has been left at the front door."   # no noise

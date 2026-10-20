@@ -142,18 +142,21 @@ def create_app(db_path: str = "kinwatch.db") -> Flask:
         if not q:
             return jsonify({"error": "Type a question first."}), 400
         try:
-            from .agent import ask as agent_ask
-            answer, path = agent_ask(q)
+            from . import agent as agent_mod
+            answer, path = agent_mod.ask(q)
+            model = agent_mod.model_label(getattr(agent_mod.ask, "last_model", "bedrock"))
         except Exception as exc:   # Bedrock key missing, account not verified, ...
             msg = str(exc)
             if "AccessDenied" in msg or "verif" in msg:
                 hint = "Bedrock refused the request. If your AWS account is new, it may still be verifying."
+            elif "11434" in msg or "ollama" in msg.lower() or "Connection refused" in msg:
+                hint = "The local model isn't running. Start Ollama, or set a working Bedrock key."
             elif "credential" in msg.lower() or "token" in msg.lower():
                 hint = "No Bedrock API key found. Set AWS_BEARER_TOKEN_BEDROCK before starting the dashboard."
             else:
                 hint = "KinWatch couldn't answer right now."
             return jsonify({"error": f"{hint} ({type(exc).__name__})"}), 502
-        return jsonify({"answer": answer, "via": path})
+        return jsonify({"answer": answer, "via": path, "model": model})
 
     @app.post("/api/settings")
     def settings():

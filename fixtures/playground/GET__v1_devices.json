@@ -4,17 +4,17 @@
       "type": "devices",
       "id": "ava1.ring.device.ZMNFUG6R2544T45H6V7SUAHNRYE2SIXEB4RWL6JSZDN5RA7YYQ3NB64WNV326X6H5JMWEE3SVDYP7VAB2HMPZXXPKNQ7TNZ4",
       "attributes": {
-        "name": "Playground Device",
-        "image_url": "https://app-content.ring.com/shared/images/devices/square_device_images/DoorbellPro/rvdp_3x.png"
+        "image_url": "https://app-content.ring.com/shared/images/devices/square_device_images/DoorbellPro/rvdp_3x.png",
+        "name": "Playground Device"
       },
       "relationships": {
-        "capabilities": {
+        "configurations": {
           "data": {
-            "type": "device-capabilities",
-            "id": "ava1.ring.device.capabilities.2CE3ILYKP627GRENIQN2NIUNF5LI63SS66EDU7VADTDMXBUOHLEG54HMDXX7D7TTG3ZC5NYTL6NV3U65LXEYUA3MTXCQHDYC"
+            "type": "device-configurations",
+            "id": "ava1.ring.device.configurations.5I4WLS2DDOQYZ2RU2NUOSCHWJ4FD3E4CIOAUHZH2IHGO5VP6XWZE3CT2XP3XZLHJ75227V6ZCHHJZH5RMLGF3ZFEGT77X4L2RGBCLGIKVQEGJCQ6AS67L6JXXM"
           },
           "links": {
-            "related": "/v1/devices/ava1.ring.device.ZMNFUG6R2544T45H6V7SUAHNRYE2SIXEB4RWL6JSZDN5RA7YYQ3NB64WNV326X6H5JMWEE3SVDYP7VAB2HMPZXXPKNQ7TNZ4/capabilities"
+            "related": "/v1/devices/ava1.ring.device.ZMNFUG6R2544T45H6V7SUAHNRYE2SIXEB4RWL6JSZDN5RA7YYQ3NB64WNV326X6H5JMWEE3SVDYP7VAB2HMPZXXPKNQ7TNZ4/configurations"
           }
         },
         "location": {
@@ -26,6 +26,15 @@
             "related": "/v1/devices/ava1.ring.device.ZMNFUG6R2544T45H6V7SUAHNRYE2SIXEB4RWL6JSZDN5RA7YYQ3NB64WNV326X6H5JMWEE3SVDYP7VAB2HMPZXXPKNQ7TNZ4/location"
           }
         },
+        "capabilities": {
+          "data": {
+            "type": "device-capabilities",
+            "id": "ava1.ring.device.capabilities.2CE3ILYKP627GRENIQN2NIUNF5LI63SS66EDU7VADTDMXBUOHLEG54HMDXX7D7TTG3ZC5NYTL6NV3U65LXEYUA3MTXCQHDYC"
+          },
+          "links": {
+            "related": "/v1/devices/ava1.ring.device.ZMNFUG6R2544T45H6V7SUAHNRYE2SIXEB4RWL6JSZDN5RA7YYQ3NB64WNV326X6H5JMWEE3SVDYP7VAB2HMPZXXPKNQ7TNZ4/capabilities"
+          }
+        },
         "status": {
           "data": {
             "type": "device-status",
@@ -34,20 +43,11 @@
           "links": {
             "related": "/v1/devices/ava1.ring.device.ZMNFUG6R2544T45H6V7SUAHNRYE2SIXEB4RWL6JSZDN5RA7YYQ3NB64WNV326X6H5JMWEE3SVDYP7VAB2HMPZXXPKNQ7TNZ4/status"
           }
-        },
-        "configurations": {
-          "data": {
-            "type": "device-configurations",
-            "id": "ava1.ring.device.configurations.5I4WLS2DDOQYZ2RU2NUOSCHWJ4FD3E4CIOAUHZH2IHGO5VP6XWZE3CT2XP3XZLHJ75227V6ZCHHJZH5RMLGF3ZFEGT77X4L2RGBCLGIKVQEGJCQ6AS67L6JXXM"
-          },
-          "links": {
-            "related": "/v1/devices/ava1.ring.device.ZMNFUG6R2544T45H6V7SUAHNRYE2SIXEB4RWL6JSZDN5RA7YYQ3NB64WNV326X6H5JMWEE3SVDYP7VAB2HMPZXXPKNQ7TNZ4/configurations"
-          }
         }
       }
     }
   ],
   "meta": {
-    "time": "2026-10-19T08:32:45Z"
+    "time": "2026-10-20T06:15:37Z"
   }
 }

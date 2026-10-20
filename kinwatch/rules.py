@@ -31,6 +31,7 @@ class RoutineConfig:
     package_minutes: int = 60         # alert if a package sits this long
     night_start: str = "22:00"
     night_end: str = "05:00"
+    camera_name: str = "front door"   # how alerts refer to the Ring camera
     activity_labels: tuple = ("person",)
 
 
@@ -66,6 +67,28 @@ def _in_night(t: datetime, cfg: RoutineConfig) -> bool:
     return cur >= start or cur < end if start > end else start <= cur < end
 
 
+def fmt_duration(minutes: float) -> str:
+    m = int(minutes)
+    if m < 60:
+        return f"{m} min"
+    h, m = divmod(m, 60)
+    return f"{h} h {m} min" if m else f"{h} h"
+
+
+# Template sentences from the Rekognition backend: repeating them in an alert adds nothing.
+_TEMPLATE_STARTS = ("A package has been left", "Someone is at the front door",
+                    "A vehicle is outside", "An animal is near", "Something moved")
+
+
+def _detail(v: dict) -> str:
+    """Extra detail worth adding to an alert message ('' if it would just repeat it)."""
+    desc = (v.get("description") or "").strip()
+    if desc.startswith(_TEMPLATE_STARTS):
+        _, _, rest = desc.partition(". ")
+        return rest.strip()
+    return desc
+
+
 def _vision(ev: dict) -> dict:
     v = ev.get("vision")
     if isinstance(v, str):
@@ -95,47 +118,55 @@ def evaluate(events: list[dict], now_ms: int, cfg: RoutineConfig | None = None) 
             alerts.append(Alert(
                 key=f"no_activity:{now.date()}", rule="no_activity", severity="high",
                 title=f"No sign of {cfg.parent_name} yet this morning",
-                message=(f"It's {now:%H:%M} and nobody has been seen at the front door since "
+                message=(f"It's {now:%H:%M} and nobody has been seen at the {cfg.camera_name} since "
                          f"{cfg.day_start}. {cfg.parent_name} usually starts the day before "
                          f"{cfg.activity_deadline}. Maybe give her a call?"),
                 at_ms=now_ms))
 
-    # R2: package left uncollected
-    for i, e in enumerate(evs):
-        v = _vision(e)
-        if not (e.get("kw_label") == "package" or v.get("package_visible")):
+    # R2: package left uncollected (today only, one alert per waiting parcel)
+    today = [e for e in evs if _local(e["start_ms"], cfg.tz).date() == now.date()
+             and e["start_ms"] <= now_ms]
+    by_device: dict[str, list[dict]] = {}
+    for e in today:
+        by_device.setdefault(e.get("device_id") or e.get("device_name") or "", []).append(e)
+    for dev_events in by_device.values():
+        waiting_since = None          # first sighting of the parcel that is still there
+        for x in dev_events:
+            vx = _vision(x)
+            if x.get("kw_label") == "package" or vx.get("package_visible"):
+                waiting_since = waiting_since or x
+            elif vx and (x.get("kw_label") or vx.get("label")) not in NOISE_LABELS:
+                # a meaningful frame without the parcel means it was taken in; birds
+                # or empty-motion frames (often a different angle) say nothing about it
+                waiting_since = None
+        if not waiting_since:
             continue
-        later = [x for x in evs[i + 1:] if x.get("device_name") == e.get("device_name")]
-        # Only a meaningful later frame can prove the parcel is gone: birds or an
-        # empty-motion frame (often a different angle) say nothing about it.
-        collected = any(
-            _vision(x) and not _vision(x).get("package_visible")
-            and (x.get("kw_label") or _vision(x).get("label")) not in NOISE_LABELS
-            for x in later)
-        waited = (now_ms - e["start_ms"]) / 60000
-        if not collected and waited >= cfg.package_minutes:
-            t = _local(e["start_ms"], cfg.tz)
+        waited = (now_ms - waiting_since["start_ms"]) / 60000
+        if waited >= cfg.package_minutes:
+            t = _local(waiting_since["start_ms"], cfg.tz)
+            extra = _detail(_vision(waiting_since))
             alerts.append(Alert(
-                key=f"package_waiting:{e['id']}", rule="package_waiting", severity="medium",
+                key=f"package_waiting:{waiting_since['id']}", rule="package_waiting",
+                severity="medium",
                 title="A delivery is still waiting at the door",
-                message=(f"A package arrived at {t:%H:%M} and has been sitting at the "
-                         f"{e.get('device_name') or 'front door'} for {int(waited)} min. "
-                         f"{v.get('description', '')}".strip()),
-                event_id=e["id"], at_ms=now_ms))
+                message=(f"A package arrived at {t:%H:%M} and has been at the "
+                         f"{cfg.camera_name} for {fmt_duration(waited)}. "
+                         f"{cfg.parent_name} may not have seen it. {extra}").strip(),
+                event_id=waiting_since["id"], at_ms=now_ms))
 
     # R3: person at the door at night
     for e in evs:
         t = _local(e["start_ms"], cfg.tz)
-        if t > now or not _in_night(t, cfg):
+        # only last night (within 12 h), not every night ever recorded
+        if t > now or now_ms - e["start_ms"] > 12 * 3600_000 or not _in_night(t, cfg):
             continue
         v = _vision(e)
         if e.get("kw_label") == "person" or v.get("person_visible"):
             alerts.append(Alert(
                 key=f"night_visitor:{e['id']}", rule="night_visitor", severity="high",
                 title="Someone at the door at night",
-                message=(f"At {t:%H:%M} a person was seen at the "
-                         f"{e.get('device_name') or 'front door'}. "
-                         f"{v.get('description', '')}".strip()),
+                message=(f"At {t:%H:%M} a person was seen at the {cfg.camera_name}. "
+                         f"{_detail(v)}").strip(),
                 event_id=e["id"], at_ms=e["start_ms"]))
     return alerts
 

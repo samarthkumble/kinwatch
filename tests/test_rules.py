@@ -66,3 +66,38 @@ def test_summary_counts_noise():
 def test_birds_later_do_not_count_as_package_collected():
     events = [ev(1, "07:40", "person"), ev(2, "08:00", "package"), ev(3, "08:20", "animal")]
     assert rules_fired(events, "09:05") == ["package_waiting"]
+
+
+def test_package_from_yesterday_does_not_alert_today():
+    yesterday = ev(9, "12:07", "package")
+    yesterday["start_ms"] -= 24 * 3600_000
+    assert rules_fired([ev(1, "07:40", "person"), yesterday], "11:30") == []
+
+
+def test_repeated_sightings_of_same_parcel_give_one_alert():
+    events = [ev(1, "07:40", "person"), ev(2, "08:00", "package"),
+              ev(3, "08:20", "package"), ev(4, "08:45", "package")]
+    alerts = evaluate(events, ms("09:30"))
+    assert [a.rule for a in alerts] == ["package_waiting"]
+    assert alerts[0].key == "package_waiting:e2"            # keyed on first sighting
+    assert "1 h 30 min" in alerts[0].message and "front door" in alerts[0].message
+
+
+def test_new_parcel_after_collection_is_a_new_alert():
+    events = [ev(1, "07:40", "person"), ev(2, "08:00", "package"),
+              ev(3, "08:30", "person", package_visible=False), ev(4, "09:00", "package")]
+    alerts = evaluate(events, ms("10:15"))
+    assert [a.key for a in alerts] == ["package_waiting:e4"]
+
+
+def test_old_night_visitor_not_reported_next_night():
+    e = ev(1, "23:15", "person")
+    e["start_ms"] -= 24 * 3600_000                          # previous night
+    assert "night_visitor" not in rules_fired([ev(2, "07:40", "person"), e], "23:30")
+
+
+def test_template_description_not_repeated_in_alert():
+    e = ev(2, "08:00", "package")
+    e["vision"]["description"] = "A package has been left at the front door. Also in view: snow."
+    msg = evaluate([ev(1, "07:40", "person"), e], ms("09:05"))[0].message
+    assert msg.count("package") == 1 and msg.endswith("Also in view: snow.")

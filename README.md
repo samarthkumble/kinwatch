@@ -34,6 +34,8 @@ python -m kinwatch.rules --at 10:05        # demo clock: evaluate rules as if it
 python -m kinwatch.rules --advance 65      # or fast-forward 65 minutes
 ```
 
+Vision backends (`KINWATCH_VISION_BACKEND`): `bedrock` (Nova 2 Lite), `rekognition` (Amazon Rekognition DetectLabels, needs AWS access keys), or `auto` (default: Bedrock, falling back to Rekognition if the account refuses Bedrock).
+
 Rules: **no activity** by the morning deadline, **package waiting** more than 60 min, **person at the door at night**. Animals and empty frames never alert. Vision answers are cached in `fixtures/vision/`, so replay mode works without AWS.
 
 ## Caregiver dashboard
@@ -52,6 +54,8 @@ python -m kinwatch.agent "How is Amma doing today?"    # Strands agent on Bedroc
 ```
 
 The MCP server (Streamable HTTP, protocol **2025-11-25**) exposes `get_today_status`, `list_events`, `get_alerts` and `get_routine`, so any MCP-capable assistant can check on the parent. The agent is built with the **Strands Agents SDK** on **Amazon Nova 2 Lite**; it calls those tools over MCP (or in-process if the server isn't running) and answers in a few plain sentences. The dashboard's "Ask KinWatch" box uses the same agent.
+
+Agent model (`KINWATCH_AGENT_MODEL`): `bedrock`, `ollama` (a local model via [Ollama](https://ollama.com), default `qwen2.5:3b`, so nothing leaves the laptop), or `auto` (default: Bedrock, falling back to Ollama if the account refuses Bedrock).
 
 ## Telegram alerts
 

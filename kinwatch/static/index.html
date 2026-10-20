@@ -340,7 +340,7 @@ $("ask").addEventListener("submit", async (ev) => {
       headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: q }) });
     const body = await res.json();
     if (!res.ok) throw new Error(body.error);
-    out.innerHTML = `${esc(body.answer)}<small>Answered by a Strands agent on Amazon Bedrock, using ${body.via === "mcp" ? "the KinWatch MCP server" : "KinWatch's tools"}.</small>`;
+    out.innerHTML = `${esc(body.answer)}<small>Answered by a Strands agent (${esc(body.model || "")}) using ${body.via === "mcp" ? "the KinWatch MCP server" : "KinWatch's tools"}.</small>`;
   } catch (err) {
     out.className = "answer err"; out.textContent = err.message;
   } finally { btn.disabled = false; }

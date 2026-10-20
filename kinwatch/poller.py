@@ -91,7 +91,11 @@ class Labeller:
             result = self.vision.describe(picture)
         except Exception as exc:  # no AWS key, no model access, network...
             print(f"      vision unavailable: {type(exc).__name__}: {str(exc)[:160]}")
-            print("      (set AWS_BEARER_TOKEN_BEDROCK, or KINWATCH_VISION=off to skip)")
+            if self.vision.backend == "rekognition" or "DetectLabels" in str(exc):
+                print("      (check AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY are your real keys,"
+                      " or set KINWATCH_VISION=off to skip)")
+            else:
+                print("      (set AWS_BEARER_TOKEN_BEDROCK, or KINWATCH_VISION=off to skip)")
             self.enabled = False
             return
         if result is None:
@@ -168,7 +172,8 @@ def refetch_media(client: RingClient, store: EventStore) -> None:
 
 def label_stored(store: EventStore, labeller: "Labeller") -> None:
     rows = store.unlabelled_pictures()
-    print(f"labelling {len(rows)} stored picture(s) with Bedrock")
+    backend = labeller.vision.backend if labeller.vision else "off"
+    print(f"labelling {len(rows)} stored picture(s) (vision backend: {backend})")
     for r in rows:
         print(f"[LABEL] {fmt_time(r['start_ms'])}  {r['snapshot_path']}")
         labeller.label(store, r["id"], r["snapshot_path"])
