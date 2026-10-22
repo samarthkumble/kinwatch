@@ -8,3 +8,6 @@ __pycache__/
 kinwatch_settings.json
 VIDEO_SCRIPT.md
 DEVPOST.md
+
+video_raw/
+video_out/

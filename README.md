@@ -2,7 +2,9 @@
 
 A Ring caretaking agent for parents who live alone. Built for the Amazon Developer Hackathon 2026 (Ring track + AWS Builder).
 
-> Status: Ring data layer, Bedrock vision, routine rules, Telegram alerts, caregiver dashboard, MCP server and the Strands agent all work.
+Demo video (2:21): https://youtu.be/q66keJ1nS-s
+
+> Status: works end to end on the Ring Developers Playground: Ring data layer, vision (Amazon Rekognition, with Bedrock built in), routine rules, Telegram alerts, caregiver dashboard, MCP server and the Strands agent.
 
 ![How KinWatch works](docs/architecture.png)
 
@@ -27,18 +29,19 @@ python -m kinwatch.poller --interval 15
 python -m pytest -q
 ```
 
-## Vision (Amazon Bedrock) and routine rules
+## Vision and routine rules
 
 ```powershell
-$env:AWS_BEARER_TOKEN_BEDROCK="your-bedrock-api-key"   # Bedrock console -> API keys
-python -m kinwatch.poller --label          # label stored snapshots with Nova 2 Lite
+$env:AWS_ACCESS_KEY_ID="..."; $env:AWS_SECRET_ACCESS_KEY="..."; $env:AWS_REGION="us-east-1"
+$env:KINWATCH_VISION_BACKEND="rekognition"   # or "bedrock" / "auto"
+python -m kinwatch.poller --label          # label stored snapshots
 python -m kinwatch.rules --at 10:05        # demo clock: evaluate rules as if it's 10:05
 python -m kinwatch.rules --advance 65      # or fast-forward 65 minutes
 ```
 
 Vision backends (`KINWATCH_VISION_BACKEND`): `bedrock` (Nova 2 Lite), `rekognition` (Amazon Rekognition DetectLabels, needs AWS access keys), or `auto` (default: Bedrock, falling back to Rekognition if the account refuses Bedrock).
 
-Rules: **no activity** by the morning deadline, **package waiting** more than 60 min, **person at the door at night**. Animals and empty frames never alert. Vision answers are cached in `fixtures/vision/`, so replay mode works without AWS.
+Rules: **no activity** by the morning deadline, **package waiting** more than 60 min, **quiet for too long** after being seen, **person at the door at night**. Animals and empty frames never alert. Vision answers are cached in `fixtures/vision/`, so replay mode works without AWS.
 
 ## Caregiver dashboard
 
@@ -52,7 +55,7 @@ Answers "is Ajji okay today?" in one sentence, shows the day's Ring events with 
 
 ```powershell
 python -m kinwatch.mcp_server                          # http://127.0.0.1:8765/mcp
-python -m kinwatch.agent "How is Ajji doing today?"    # Strands agent on Bedrock
+python -m kinwatch.agent "How is Ajji doing today?"    # Strands agent (Bedrock or local Ollama)
 ```
 
 The MCP server (Streamable HTTP, protocol **2025-11-25**) exposes `get_today_status`, `list_events`, `get_alerts` and `get_routine`, so any MCP-capable assistant can check on the parent. The agent is built with the **Strands Agents SDK** on **Amazon Nova 2 Lite**; it calls those tools over MCP (or in-process if the server isn't running) and answers in a few plain sentences. The dashboard's "Ask KinWatch" box uses the same agent.
@@ -69,4 +72,4 @@ python -m kinwatch.notify --test    # after sending your bot a message
 ## What we learned about the Playground (feeds the friction log)
 
 - Simulated Package / Vehicle / Motion events show up in event history as `event_type: "on_demand"` with an empty `cv_detections` list, so the API alone can't tell you *what* happened.
-- KinWatch fills that gap: it grabs a snapshot for each event and labels it itself (Bedrock vision, next step). On real devices with Smart Alerts on, motion events carry `sub_type` (`human`, `vehicle`, `package_delivery`, `other_motion`), and KinWatch will use those when present.
+- KinWatch fills that gap: it grabs a snapshot for each event and labels it itself (Amazon Rekognition, or Bedrock where the account allows it). On real devices with Smart Alerts on, motion events carry `sub_type` (`human`, `vehicle`, `package_delivery`, `other_motion`), and KinWatch will use those when present.
