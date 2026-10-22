@@ -33,7 +33,7 @@ What I expected: different `event_type` / `sub_type`, or something in `cv_detect
 
 What happened: both came back as `event_type: "on_demand"` with empty `cv_detections`. No way to tell them apart.
 
-Workaround: KinWatch grabs a snapshot for each event and asks Bedrock (Nova 2 Lite) what's in it. Honestly this turned into the main feature of the app, because the package clip and the bird-feeder clip look nothing alike even though the API calls them the same thing.
+Workaround: KinWatch grabs a snapshot for each event and asks Amazon Rekognition what's in it (Bedrock Nova 2 Lite was the plan, see #7). Honestly this turned into the main feature of the app, because the package clip and the bird-feeder clip look nothing alike even though the API calls them the same thing.
 
 Suggestion: let simulated events carry the same `sub_type` values real devices send (`package_delivery`, `vehicle`, `human`...), so we can test that path without hardware.
 
@@ -70,6 +70,8 @@ What happened:
 
 Workaround: opened a support case (Account and billing). Meanwhile I built and tested everything that didn't need Bedrock, and the Bedrock code runs against a fake client in my tests so I'd know it was ready.
 
+Update, Thu 22 Oct: still blocked, support case still open. I switched vision to Amazon Rekognition (DetectLabels), which worked on the same account straight away, and kept Bedrock as the first choice in the code with an automatic fallback. The agent runs on a local model through Ollama for now.
+
 Suggestion: "Operation not allowed" doesn't tell you anything. Something like "Bedrock isn't enabled for this account yet" would have saved me an hour of trying different models and regions. And for the hackathon itself, it'd be nice to tell people to create their AWS account early and test one Bedrock call before starting.
 
 PRODUCT FEEDBACK
@@ -89,13 +91,22 @@ Ring Partner API
 
 Amazon Bedrock (Nova 2 Lite)
 - What I used it for: labelling each Ring snapshot (person / package / vehicle / animal / nothing) plus a one-line description a family member can read on their phone.
-- How it went: _TODO: fill in once my account is enabled (label quality, speed, cost)._
+- How it went: I never got one successful call (see #7), so I can't say anything about label quality yet. The code path is tested against a fake client and turns on by itself once the account is enabled.
 - What needs work: new account activation (#7).
+
+Amazon Rekognition (DetectLabels)
+- What I used it for: labelling every Ring snapshot after Bedrock was blocked. This is what turns "on_demand" into "a package has been left at the front door".
+- What worked: it worked first try on the same account where Bedrock was refused. Trying an image in the console before writing any code was really useful, and calls come back fast.
+- What needs work: the labels are very generic for a doorstep. On my clear Playground parcel frame it returned Outdoors 99.9, Nature 99.9, Weather 99.5, then Box only 79.1, and Hot Tub 62.4 for a snowy porch. I had to write my own mapping with thresholds and a list of generic labels to ignore. A doorstep/delivery label set, or a package label tuned for porches, would help a lot.
+- Onboarding: very quick, once I had IAM access keys.
+- Would I use it again: yes.
 
 Strands Agents SDK
 - What I used it for: the "Ask KinWatch" agent. Bedrock is the model, and it gets its tools from my MCP server through `MCPClient` over Streamable HTTP.
 - What worked: `MCPClient` + `list_tools_sync()` turned my MCP tools into agent tools in a few lines, and `BedrockModel` taking an `api_key` matched the Bedrock API keys nicely.
-- What needs work: _TODO: after I run it against Bedrock._
+- How it went: since Bedrock was blocked, I ran the same agent on a local model with Strands' `OllamaModel` (qwen2.5:7b). Swapping the model was one line, which I really liked.
+- What needs work: with a small local model the agent sometimes invented times or answered in bullet lists when my tools returned nested JSON. I fixed it by adding plain one-line "facts" to the tool output and putting the current time in the system prompt. A short note in the docs about tool-output shape for smaller models would help. On a laptop CPU one answer takes about a minute, but that's the model, not Strands.
+- Would I use it again: yes.
 
 MCP (Python SDK 1.x, protocol 2025-11-25)
 - What I used it for: the KinWatch MCP server (`get_today_status`, `list_events`, `get_alerts`, `get_routine`).
